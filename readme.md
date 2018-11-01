@@ -9,6 +9,8 @@ docker network create vnet
 docker-compose up -d
 ```
 
+If you'd like a websocket server, just set env: `JANUSGRAPH_TYPE=socket`
+
 # Step by Step
 
 ## 1. build

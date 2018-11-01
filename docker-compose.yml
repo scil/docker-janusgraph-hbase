@@ -4,7 +4,7 @@ services:
   janusgraph-http:
     build: .
     image: scil/janusgraph:latest
-    container_name: janusgraph
+    container_name: janusgraph-http
     networks: ["vnet"]
     hostname: janusgraph.vnet
     links:
