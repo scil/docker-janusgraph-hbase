@@ -23,7 +23,7 @@ build console
 docker image build -t scil/janusgraph-console .  --build-arg console=true
 ```
 
-## 2. run
+## 2. edit run.sh and execute it 
 
 ```
 ./run.sh 
@@ -35,6 +35,8 @@ two hosts must be given
 --add-host es-server:192.168.1.111 
 ```  
 192.168.1.111 is where you elasticsearch server , ensure `network.host:  0.0.0.0` in  elasticsearch.yml
+
+If can download janusgraph-${JANUSGRAPH_VERSION}-hadoop2.zip to here, otherwise Dockerfile will use wget.
 
 You can also use -v <conf dir>:/home/janusgraph/janusgraph/conf/gremlin-server to use your own conf files for the JanusGraph server. The following files are used by JanusGraph Server in that directory:
  
