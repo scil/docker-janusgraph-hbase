@@ -1,0 +1,128 @@
+version: "2.2"
+services:
+  
+  janusgraph-http:
+    build: .
+    image: scil/janusgraph:latest
+    container_name: janusgraph
+    networks: ["vnet"]
+    hostname: janusgraph.vnet
+    links:
+      - "zookeeper-1:hbase-server"
+      - "elasticsearch:es-server"
+    #extra_hosts:
+      # - "hbase-server:172.18.0.4"
+      # - "es-server:192.168.1.111"
+    depends_on:
+      - elasticsearch
+      - hmaster-1
+    #volumes:
+      #- /vagrant/vendors/janusgraph-0.3.1-hadoop2/conf/gremlin-server:/home/janusgraph/janusgraph/conf/gremlin-server
+    ports: ["8182:8182"]
+    environment:
+      - JANUSGRAPH_TYPE=http
+      - JANUSGRAPH_VERSION=0.3.1
+      
+      
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.4.2
+    container_name: elasticsearch
+    networks: ["vnet"]
+    hostname: elasticsearch.vnet
+    ports:
+      - "9200:9200"
+    environment:
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "network.host: 0.0.0.0"
+      - "transport.host=127.0.0.1"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200"]
+      interval: 1s
+      timeout: 30s
+      retries: 30
+    #volumes:
+      #-  ./es/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+
+  zookeeper-1:
+    container_name: zookeeper-1    
+    networks: ["vnet"]
+    hostname: zookeeper-1.vnet
+    image: smizy/zookeeper:3.4-alpine
+    ports: ["2181:2181"]
+    environment:
+      - SERVICE_2181_NAME=zookeeper
+      - SERVICE_2888_IGNORE=true
+      - SERVICE_3888_IGNORE=true
+      
+    command: -server 1 1 vnet
+
+  namenode-1:
+    container_name: namenode-1
+    networks: ["vnet"]
+    hostname: namenode-1.vnet
+    image: smizy/hadoop-base:2.7.7-alpine 
+    expose: ["8020"]
+    ports:  ["50070"]
+    environment:
+      - SERVICE_8020_NAME=namenode
+      - SERVICE_50070_IGNORE=true
+      - HADOOP_ZOOKEEPER_QUORUM=zookeeper-1.vnet:2181 
+      - HADOOP_HEAPSIZE=1000
+      - HADOOP_NAMENODE_HA=
+      
+    entrypoint: entrypoint.sh
+    command: namenode-1
+
+  datanode-1:
+    container_name: datanode-1
+    networks: ["vnet"]
+    hostname: datanode-1.vnet
+    image: smizy/hadoop-base:2.7.7-alpine
+    expose: ["50010", "50020", "50075"]
+    environment:
+      - SERVICE_50010_NAME=datanode
+      - SERVICE_50020_IGNORE=true
+      - SERVICE_50075_IGNORE=true
+      - HADOOP_ZOOKEEPER_QUORUM=zookeeper-1.vnet:2181 
+      - HADOOP_HEAPSIZE=1000
+      - HADOOP_NAMENODE_HA=
+      
+    entrypoint: entrypoint.sh
+    command: datanode
+
+  hmaster-1:
+    container_name: hmaster-1
+    networks: ["vnet"]
+    hostname: hmaster-1.vnet
+    image: smizy/hbase:1.2.7-alpine
+    expose: [16000]
+    ports:  ["60010:16010"]
+    depends_on: ["zookeeper-1"]
+    environment:
+      - SERVICE_16000_NAME=hmaster
+      - SERVICE_16010_IGNORE=true
+      - HBASE_ZOOKEEPER_QUORUM=zookeeper-1.vnet:2181 
+      
+    volumes_from:
+      - namenode-1
+    command: hmaster-1
+
+  regionserver-1:
+    container_name: regionserver-1
+    networks: ["vnet"]
+    hostname: regionserver-1.vnet
+    image: smizy/hbase:1.2.7-alpine
+    expose: [16020, 16030]
+    ports: ["60020:16020"]
+    depends_on: ["zookeeper-1"]
+    environment:
+      - SERVICE_16020_NAME=regionserver
+      - SERVICE_16030_IGNORE=true
+      - HBASE_ZOOKEEPER_QUORUM=zookeeper-1.vnet:2181 
+      
+    command: regionserver
+
+networks:
+  vnet:
+    external:
+      name: vnet 

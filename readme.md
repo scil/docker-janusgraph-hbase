@@ -1,6 +1,19 @@
-# 1. build
+# Quick Start
 
-build server
+require:  
+1. docker
+2. docker-compose
+
+```
+docker network create vnet
+docker-compose up -d
+```
+
+# Step by Step
+
+## 1. build
+
+build gremlin-server
 ```
 docker image build -t scil/janusgraph .
 ```
@@ -10,14 +23,17 @@ build console
 docker image build -t scil/janusgraph-console .  --build-arg console=true
 ```
 
-# 2. run
+## 2. run
 
 ```
 ./run.sh 
 ```
  
 two hosts must be given   
-` --add-host hbase-server:192.168.1.110  --add-host es-server:192.168.1.111 `  
+```
+--add-host hbase-server:192.168.1.110  
+--add-host es-server:192.168.1.111 
+```  
 192.168.1.111 is where you elasticsearch server , ensure `network.host:  0.0.0.0` in  elasticsearch.yml
 
 You can also use -v <conf dir>:/home/janusgraph/janusgraph/conf/gremlin-server to use your own conf files for the JanusGraph server. The following files are used by JanusGraph Server in that directory:
@@ -28,16 +44,17 @@ You can also use -v <conf dir>:/home/janusgraph/janusgraph/conf/gremlin-server t
      log4j-server.properties
 
 If you need to adjust the java heap size for the JanusGraph Server Java process, you can use -e to specify the JAVA_OPTIONS like this:  
-`-e "JAVA_OPTIONS=-Xms2048m -Xmx2048m"`
-This will assign 2GB for the java heap.   
+`-e "JAVA_OPTIONS=-Xms2048m -Xmx2048m"`  
+This will assign 2GB for the java heap. 
+
 Thanks to https://hub.docker.com/r/yihongwang/janusgraph-server/ which is about janusgraph and cassandra (not hbase)
 
 
-# 3. docker compose
+## 3. docker compose
 
 use `docker-compose.yml` produced by [docker-hbase](https://github.com/scil/docker-hbase)  and  run   
 ` docker-compose up janusgraph -d`  
-or
+or  
 ` docker-compose start janusgraph `  
 
 ##  Sollution 1: add a service
@@ -69,50 +86,16 @@ or
 
 ##  Sollution 2: use service elasticsearch
 
+See `docker-compose.yml`.
+
 Thanks to [janusgraph-dist-hadoop-2/docker-compose](https://github.com/JanusGraph/janusgraph/blob/d12adfbf083f575fa48860daa37bfbd0e6095369/janusgraph-dist/janusgraph-dist-hadoop-2/docker-compose.yml)
 
+## 4. test
+
+test elasticsearch
 ```
-
-  janusgraph:
-    container_name: janusgraph
-    networks: ["vnet"]
-    hostname: janusgraph
-    links:
-      - "zookeeper-1:hbase-server"
-      - "elasticsearch:es-server"
-    depends_on:
-      zookeeper-1
-      elasticsearch:
-        - condition: service_healthy
-    volumes:
-      - /vagrant/vendors/janusgraph-0.3.1-hadoop2/conf/gremlin-server:/home/janusgraph/janusgraph/conf/gremlin-server
-    image: scil/janusgraph:latest
-    ports: ["8182:8182"]
-    environment:
-      - JANUSGRAPH_TYPE=http
-      - JANUSGRAPH_VERSION=0.3.1
-
-
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:5.3.2
-    environment:
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-      - "http.host=0.0.0.0"
-      - "transport.host=127.0.0.1"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9200"]
-      interval: 1s
-      timeout: 30s
-      retries: 30
-    ports:
-      - "9200"
-    volumes:
-      -  ./es/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
-
+curl http://localhost:9200
 ```
-
-
-# 4. test
 
 test http (ENV JANUSGRAPH_TYPE=http)
 ```

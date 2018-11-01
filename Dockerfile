@@ -1,7 +1,5 @@
 FROM openjdk:8
 
-ARG console
- 
 ENV JANUSGRAPH_VERSION=0.3.1
 ENV JANUSGRAPH_TYPE=socket
 
@@ -47,5 +45,5 @@ VOLUME /home/janusgraph/janusgraph/scripts
 
 # How can I use a variable inside a Dockerfile CMD? https://stackoverflow.com/questions/40454470/how-can-i-use-a-variable-inside-a-dockerfile-cmd
 # Dockerfile if else condition with external arguments https://stackoverflow.com/questions/43654656/dockerfile-if-else-condition-with-external-arguments
-CMD  if [ "x$console" = "x" ] ; then  ./bin/gremlin-server.sh  ./conf/gremlin-server/${JANUSGRAPH_TYPE}-hbase-es-server.yaml  ; else bin/gremlin.sh ; fi
+CMD  if [ "x$JANUSGRAPH_TYPE" = "console" ] ; then  bin/gremlin.sh ; else   ./bin/gremlin-server.sh  ./conf/gremlin-server/${JANUSGRAPH_TYPE}-hbase-es-server.yaml  ; fi
 
