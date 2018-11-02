@@ -6,10 +6,33 @@ require:
 
 ```
 docker network create vnet
+
+#  If you'd like a websocket server, just set env: `JANUSGRAPH_TYPE=socket` and it would better to replace string 'janusgraph-http' with 'janusgraph-socket'
 docker-compose up -d
+
 ```
 
-If you'd like a websocket server, just set env: `JANUSGRAPH_TYPE=socket`
+wait enough time and test
+```
+curl -XPOST -Hcontent-type:application/json -d '{"gremlin":"g.V().values(\"name\")"}' http://localhost:8182
+# response looks like :
+#	curl: (56) Recv failure: Connection reset by peer
+# after enough time:
+#	{"requestId":"fd1abb80-7684-4a95-ae77-77c9c4b1be6d","status":{"message":"","code":200,"attributes":{"@type":"g:Map","@value":[]}},"result":{"data":{"@type":"g:List","@value":[]},"meta":{"@type":"g:Map","@value":[]}}}
+```
+
+If something goes wrong
+```
+docker-compose ps
+
+docker logs [service-name]
+```
+
+Try ` docker-compose stop && docker-compose rm && docker-compose up -d`  [How to rebuild docker container in docker-compose.yml?](https://stackoverflow.com/questions/36884991/how-to-rebuild-docker-container-in-docker-compose-yml)  
+if logs contain 
+```
+regionserver-1     | 2018-11-02 08:28:22,414 WARN  [regionserver/regionserver-1.vnet/172.18.0.7:16020.logRoller] wal.FSHLog: Too many consecutive RollWriter requests, it's a sign of the total number of live datanodes is lower than the tolerable replicas.
+```
 
 # Step by Step
 
