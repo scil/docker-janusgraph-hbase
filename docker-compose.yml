@@ -1,10 +1,10 @@
 version: "2.2"
 services:
   
-  janusgraph-http:
+  janusgraph:
     build: .
     image: scil/janusgraph:latest
-    container_name: janusgraph-http
+    container_name: janusgraph
     networks: ["vnet"]
     hostname: janusgraph.vnet
     links:
@@ -23,8 +23,12 @@ services:
       #- /vagrant/vendors/janusgraph-0.3.1-hadoop2/conf/gremlin-server:/home/janusgraph/janusgraph/conf/gremlin-server
     ports: ["8182:8182"]
     environment:
-      - JANUSGRAPH_TYPE=http
+      - JANUSGRAPH_TYPE=socket
       - JANUSGRAPH_VERSION=0.3.1
+      #assign 2GB for the java heap
+      #- JAVA_OPTIONS=-Xms2048m -Xmx2048m
+      #test
+      #- JAVA_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,address=8000,suspend=y
       
       
   elasticsearch:
@@ -99,7 +103,8 @@ services:
     hostname: hmaster-1.vnet
     image: smizy/hbase:1.2.7-alpine
     expose: [16000]
-    ports:  ["127.0.0.1:60010:16010"]
+    # hbase web: http://127.0.0.1:60010
+    ports:  ["60010:16010"]
     depends_on: ["zookeeper-1"]
     environment:
       - SERVICE_16000_NAME=hmaster

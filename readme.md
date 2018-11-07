@@ -7,7 +7,7 @@ require:
 ```
 docker network create vnet
 
-#  If you'd like a websocket server, just set env: `JANUSGRAPH_TYPE=socket` and it would better to replace string 'janusgraph-http' with 'janusgraph-socket'
+#  If you'd like a websocket server, just set env: `JANUSGRAPH_TYPE=socket`.
 docker-compose up -d
 
 ```
