@@ -23,6 +23,8 @@ services:
       #- /vagrant/vendors/janusgraph-0.3.1-hadoop2/conf/gremlin-server:/home/janusgraph/janusgraph/conf/gremlin-server
     ports: ["8182:8182"]
     environment:
+      # socket, http or both
+      # https://docs.janusgraph.org/0.3.1/server.html#_janusgraph_server_as_both_a_websocket_and_http_endpoint
       - JANUSGRAPH_TYPE=socket
       - JANUSGRAPH_VERSION=0.3.1
       #assign 2GB for the java heap
@@ -37,7 +39,7 @@ services:
     networks: ["vnet"]
     hostname: elasticsearch.vnet
     ports:
-      - "127.0.0.1:9200:9200"
+      - "0.0.0.0:9200:9200"
     environment:
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
       - "network.host: 0.0.0.0"
@@ -55,7 +57,7 @@ services:
     networks: ["vnet"]
     hostname: zookeeper-1.vnet
     image: smizy/zookeeper:3.4-alpine
-    ports: ["127.0.0.1:2181:2181"]
+    ports: ["0.0.0.0:2181:2181"]
     environment:
       - SERVICE_2181_NAME=zookeeper
       - SERVICE_2888_IGNORE=true
@@ -121,7 +123,7 @@ services:
     hostname: regionserver-1.vnet
     image: smizy/hbase:1.2.7-alpine
     expose: [16020, 16030]
-    ports: ["127.0.0.1:60020:16020"]
+    ports: ["0.0.0.0:60020:16020"]
     depends_on: ["zookeeper-1"]
     environment:
       - SERVICE_16020_NAME=regionserver

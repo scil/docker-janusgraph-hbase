@@ -30,7 +30,10 @@ RUN \
        sed -E -i 's/janusgraph-cql-es-server/janusgraph-hbase-es-server/'                     conf/gremlin-server/socket-hbase-es-server.yaml &&\
        cp conf/gremlin-server/gremlin-server.yaml                                                         conf/gremlin-server/http-hbase-es-server.yaml  &&\
        sed -E -i 's/janusgraph-cql-es-server/janusgraph-hbase-es-server/'                     conf/gremlin-server/http-hbase-es-server.yaml &&\
-       sed -E -i 's/channel\.WebSocketChannelizer/channel\.HttpChannelizer/'               conf/gremlin-server/http-hbase-es-server.yaml 
+       sed -E -i 's/channel\.WebSocketChannelizer/channel\.HttpChannelizer/'               conf/gremlin-server/http-hbase-es-server.yaml &&\
+       cp conf/gremlin-server/gremlin-server.yaml                                                         conf/gremlin-server/both-hbase-es-server.yaml  &&\
+       sed -E -i 's/janusgraph-cql-es-server/janusgraph-hbase-es-server/'                     conf/gremlin-server/both-hbase-es-server.yaml &&\
+       sed -E -i 's/channel\.WebSocketChannelizer/channel\.WsAndHttpChannelizer/'    conf/gremlin-server/both-hbase-es-server.yaml 
 
 
 EXPOSE 8182
@@ -43,4 +46,3 @@ WORKDIR /home/janusgraph/janusgraph
 # How can I use a variable inside a Dockerfile CMD? https://stackoverflow.com/questions/40454470/how-can-i-use-a-variable-inside-a-dockerfile-cmd
 # Dockerfile if else condition with external arguments https://stackoverflow.com/questions/43654656/dockerfile-if-else-condition-with-external-arguments
 CMD  if [ "x$JANUSGRAPH_TYPE" = "console" ] ; then  bin/gremlin.sh ; else   ./bin/gremlin-server.sh  ./conf/gremlin-server/${JANUSGRAPH_TYPE}-hbase-es-server.yaml  ; fi
-
