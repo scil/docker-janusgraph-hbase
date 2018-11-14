@@ -1,7 +1,8 @@
-FROM openjdk:8
+FROM jboss/base-jdk:8
 
 ENV JANUSGRAPH_VERSION=0.3.1
 ENV JANUSGRAPH_TYPE=socket
+ENV JANUSGRAPH_HOME /usr/local/janusgraph
 
 # Conditional COPY/ADD in Dockerfile? https://stackoverflow.com/questions/31528384/conditional-copy-add-in-dockerfile
 COPY docker-compose.yml janusgraph-${JANUSGRAPH_VERSION}-hadoop2.zi[p]  /tmp/
@@ -11,17 +12,17 @@ COPY docker-compose.yml janusgraph-${JANUSGRAPH_VERSION}-hadoop2.zi[p]  /tmp/
 # https://blog.yiz96.com/janusgraph-setup/ how to edit conf files for hbase 
 
 RUN \
-    groupadd --gid 1000 janusgraph &&\
-    useradd --uid 1000 --gid janusgraph --shell /bin/bash --create-home janusgraph  &&\
+    test -f /tmp/janusgraph-${JANUSGRAPH_VERSION}-hadoop2.zip  \
+    || yum install wget &&\
     test -f /tmp/janusgraph-${JANUSGRAPH_VERSION}-hadoop2.zip  \
     || wget https://github.com/JanusGraph/janusgraph/releases/download/v$JANUSGRAPH_VERSION/janusgraph-$JANUSGRAPH_VERSION-hadoop2.zip -O /tmp/janusgraph-${JANUSGRAPH_VERSION}-hadoop2.zip &&\
-	mkdir -p /home/janusgraph &&\
-	cd /home/janusgraph &&\
-	unzip /tmp/janusgraph-${JANUSGRAPH_VERSION}-hadoop2.zip -d /home/janusgraph &&\
+	mkdir -p $JANUSGRAPH_HOME &&\
+	cd $JANUSGRAPH_HOME &&\
+	unzip /tmp/janusgraph-${JANUSGRAPH_VERSION}-hadoop2.zip -d $JANUSGRAPH_HOME &&\
 	rm /tmp/janusgraph-${JANUSGRAPH_VERSION}-hadoop2.zip &&\
 	rm /tmp/docker-compose.yml  &&\
-	ln -s /home/janusgraph/janusgraph-${JANUSGRAPH_VERSION}-hadoop2 /home/janusgraph/janusgraph  &&\
-	cd /home/janusgraph/janusgraph &&\
+	ln -s $JANUSGRAPH_HOME/janusgraph-${JANUSGRAPH_VERSION}-hadoop2 $JANUSGRAPH_HOME/janusgraph  &&\
+	cd $JANUSGRAPH_HOME/janusgraph &&\
        cp conf/janusgraph-hbase-es.properties                                                               conf/gremlin-server/janusgraph-hbase-es-server.properties &&\
        sed -E -i '1igremlin.graph=org.janusgraph.core.JanusGraphFactory\'                  conf/gremlin-server/janusgraph-hbase-es-server.properties  &&\
        sed -E -i 's/storage\.hostname=.*$/storage\.hostname=hbase-server/'               conf/gremlin-server/janusgraph-hbase-es-server.properties &&\
@@ -38,10 +39,10 @@ RUN \
 
 EXPOSE 8182
 
-VOLUME /home/janusgraph/janusgraph/conf/gremlin-server
-VOLUME /home/janusgraph/janusgraph/scripts
+VOLUME $JANUSGRAPH_HOME/janusgraph/conf/gremlin-server
+VOLUME $JANUSGRAPH_HOME/janusgraph/scripts
 
-WORKDIR /home/janusgraph/janusgraph
+WORKDIR $JANUSGRAPH_HOME/janusgraph
 
 # How can I use a variable inside a Dockerfile CMD? https://stackoverflow.com/questions/40454470/how-can-i-use-a-variable-inside-a-dockerfile-cmd
 # Dockerfile if else condition with external arguments https://stackoverflow.com/questions/43654656/dockerfile-if-else-condition-with-external-arguments

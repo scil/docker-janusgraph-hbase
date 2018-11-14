@@ -7,7 +7,7 @@ require:
 ```
 docker network create vnet
 
-#  If you'd like a websocket server, just set env: `JANUSGRAPH_TYPE=socket`.
+#  If you'd only like a websocket server, just set env: `JANUSGRAPH_TYPE=socket`.
 docker-compose up -d
 
 ```
@@ -21,22 +21,25 @@ curl -XPOST -Hcontent-type:application/json -d '{"gremlin":"g.V().values(\"name\
 #	{"requestId":"fd1abb80-7684-4a95-ae77-77c9c4b1be6d","status":{"message":"","code":200,"attributes":{"@type":"g:Map","@value":[]}},"result":{"data":{"@type":"g:List","@value":[]},"meta":{"@type":"g:Map","@value":[]}}}
 ```
 
-If something goes wrong
-```
-#ensure /etc/hosts is right
-cat /etc/hosts  && echo hmaster-1-IP, regionserver-1-IP = `docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' hmaster-1 regionserver-1` 
-
-docker-compose ps
-
-docker logs [service-name]
+# use local janusgraph instead of service janusgraph
 
 ```
+docker-compose stop janusgraph
 
-Try ` docker-compose stop && docker-compose rm && docker-compose up -d`  [How to rebuild docker container in docker-compose.yml?](https://stackoverflow.com/questions/36884991/how-to-rebuild-docker-container-in-docker-compose-yml)  
-if logs contain 
+# edit hosts
+./update_hosts.sh
+
+$JANUSGRAPH_LOC=/vagrant/vendors/janusgraph-0.3.1-hadoop2
+
+# first edit then run
+vi ./config_local_janusgraph.sh
+
+$JANUSGRAPH_LOC/bin/gremlin-server.sh  $JANUSGRAPH_LOC/conf/gremlin-server/${JANUSGRAPH_TYPE}-hbase-es-server.yaml 
+
 ```
-regionserver-1     | 2018-11-02 08:28:22,414 WARN  [regionserver/regionserver-1.vnet/172.18.0.7:16020.logRoller] wal.FSHLog: Too many consecutive RollWriter requests, it's a sign of the total number of live datanodes is lower than the tolerable replicas.
-```
+
+use gremlin-python? see [python](python.md)
+
 
 # Step by Step
 
@@ -127,13 +130,22 @@ test elasticsearch
 ```
 curl http://localhost:9200
 ```
+test gremlin.sh
+```
+graph = JanusGraphFactory.open('conf/janusgraph-hbase-es.properties')
+# put some data into graph
+GraphOfTheGodsFactory.load(graph)
+g = graph.traversal()
+saturn = g.V().has('name', 'saturn').next()
+g.V(saturn).valueMap()
+```
 
 test http (ENV JANUSGRAPH_TYPE=http)
 ```
 curl -XPOST -Hcontent-type:application/json -d '{"gremlin":"g.V().values(\"name\")"}' http://localhost:8182
 ```
 
-test socket( ENV JANUSGRAPH_TYPE=socket)
+test socket( ENV JANUSGRAPH_TYPE=socket, or both)
 ```
 # bin/gremlin.sh
 # https://docs.janusgraph.org/0.3.1/server.html
@@ -141,35 +153,21 @@ test socket( ENV JANUSGRAPH_TYPE=socket)
 :> g.V().values('name')
 ```
 
-# if not using service janusgraph
+
+
+#  If something goes wrong
+```
+#ensure /etc/hosts is right if using local janusgraph instead of service janusgraph
+tail /etc/hosts | grep vnet  && echo real IPs: && echo  `docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' hmaster-1 ` hmaster-1   && echo  `docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' regionserver-1` regionserver-1  && echo  `docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' zookeeper-1` zookeeper-1  
+
+docker-compose ps
+
+docker logs [service-name]
 
 ```
-JANUSGRAPH_VERSION=0.3.1
-# both, http or socket
-JANUSGRAPH_TYPE=both
-JANUSGRAPH_DIR=/opt/janus
 
-mkdir -p $JANUSGRAPH_DIR
-wget https://github.com/JanusGraph/janusgraph/releases/download/v$JANUSGRAPH_VERSION/janusgraph-$JANUSGRAPH_VERSION-hadoop2.zip -O /tmp/janusgraph-${JANUSGRAPH_VERSION}-hadoop2.zip
-unzip /tmp/janusgraph-${JANUSGRAPH_VERSION}-hadoop2.zip -d $JANUSGRAPH_DIR &&\
-cd $JANUSGRAPH_DIR/janusgraph &&\
-
-cp conf/janusgraph-hbase-es.properties                                                               conf/gremlin-server/janusgraph-hbase-es-server.properties &&\
-sed -E -i '1igremlin.graph=org.janusgraph.core.JanusGraphFactory\'                  conf/gremlin-server/janusgraph-hbase-es-server.properties  &&\
-sed -E -i 's/storage\.hostname=.*$/storage\.hostname=hbase-server/'               conf/gremlin-server/janusgraph-hbase-es-server.properties &&\
-sed -E -i 's/index\.search\.hostname=.*$/index\.search\.hostname=es-server/'    conf/gremlin-server/janusgraph-hbase-es-server.properties
-
-cp conf/gremlin-server/gremlin-server.yaml                                                         conf/gremlin-server/socket-hbase-es-server.yaml &&\
-sed -E -i 's/janusgraph-cql-es-server/janusgraph-hbase-es-server/'                     conf/gremlin-server/socket-hbase-es-server.yaml 
-
-cp conf/gremlin-server/gremlin-server.yaml                                                         conf/gremlin-server/http-hbase-es-server.yaml  &&\
-sed -E -i 's/janusgraph-cql-es-server/janusgraph-hbase-es-server/'                     conf/gremlin-server/http-hbase-es-server.yaml &&\
-sed -E -i 's/channel\.WebSocketChannelizer/channel\.HttpChannelizer/'               conf/gremlin-server/http-hbase-es-server.yaml 
-
-cp conf/gremlin-server/gremlin-server.yaml                                                         conf/gremlin-server/both-hbase-es-server.yaml  &&\
-sed -E -i 's/janusgraph-cql-es-server/janusgraph-hbase-es-server/'                     conf/gremlin-server/both-hbase-es-server.yaml &&\
-sed -E -i 's/channel\.WebSocketChannelizer/channel\.WsAndHttpChannelizer/'               conf/gremlin-server/both-hbase-es-server.yaml 
-
-./bin/gremlin-server.sh  ./conf/gremlin-server/${JANUSGRAPH_TYPE}-hbase-es-server.yaml 
-
+Try ` docker-compose down && docker-compose up -d`  [How to rebuild docker container in docker-compose.yml?](https://stackoverflow.com/questions/36884991/how-to-rebuild-docker-container-in-docker-compose-yml)  
+if logs contain 
+```
+regionserver-1     | 2018-11-02 08:28:22,414 WARN  [regionserver/regionserver-1.vnet/172.18.0.7:16020.logRoller] wal.FSHLog: Too many consecutive RollWriter requests, it's a sign of the total number of live datanodes is lower than the tolerable replicas.
 ```
