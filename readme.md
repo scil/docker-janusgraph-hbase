@@ -92,7 +92,7 @@ use `docker-compose.yml` produced by [docker-hbase](https://github.com/scil/dock
 or  
 ` docker-compose start janusgraph `  
 
-##  Sollution :  use janusgraph as  a service
+##  Choice 1 :  use janusgraph as  a service
 
 ```
   janusgraph:
@@ -119,7 +119,7 @@ or
 
 192.168.1.111 is where you elasticsearch server , ensure `network.host:  0.0.0.0` in  elasticsearch.yml and `vm.max_map_count=655360` in `/etc/sysctl.conf`. 
 
-##  Sollution : use  elasticsearch as a service
+##  Choice 2 : use  elasticsearch as a service
 
 See `docker-compose.yml`.
 
