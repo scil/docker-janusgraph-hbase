@@ -7,6 +7,7 @@ require:
 ```
 docker network create vnet
 
+# edit docker-compose.yml and run
 #  If you'd only like a websocket server, just set env: `JANUSGRAPH_TYPE=socket`.
 docker-compose up -d
 
@@ -91,7 +92,7 @@ use `docker-compose.yml` produced by [docker-hbase](https://github.com/scil/dock
 or  
 ` docker-compose start janusgraph `  
 
-##  Sollution 1: add a service
+##  Sollution :  use janusgraph as  a service
 
 ```
   janusgraph:
@@ -118,7 +119,7 @@ or
 
 192.168.1.111 is where you elasticsearch server , ensure `network.host:  0.0.0.0` in  elasticsearch.yml and `vm.max_map_count=655360` in `/etc/sysctl.conf`. 
 
-##  Sollution 2: use service elasticsearch
+##  Sollution : use  elasticsearch as a service
 
 See `docker-compose.yml`.
 
