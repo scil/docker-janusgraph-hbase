@@ -15,7 +15,7 @@ docker-compose up -d
 
 wait enough time and test
 ```
-curl -XPOST -Hcontent-type:application/json -d '{"gremlin":"g.V().values(\"name\")"}' http://localhost:8182
+curl -XPOST -H content-type:application/json -d '{"gremlin":"g.V().values(\"name\")"}' http://localhost:8182
 # response looks like :
 #	curl: (56) Recv failure: Connection reset by peer
 # after enough time:
